@@ -10,11 +10,12 @@ license-file: LICENSE
 maintainer: Mitchell Rosen <mitchellwrosen@gmail.com>, Travis Staton <hello@travisstaton.com>
 name: pin-board
 stability: experimental
-synopsis: A lightweight structured concurrency library
-version: 0.3.0
+synopsis: An abstraction for reducing memory usage with manual sharing
+tested-with: GHC == 8.10.7, GHC == 9.0.1, GHC == 9.2.1
+version: 0.1.0
 
 description:
-  TODO
+  An abstraction for reducing memory usage with manual sharing.
 
 extra-source-files:
   CHANGELOG.md
