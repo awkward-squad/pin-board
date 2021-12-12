@@ -39,13 +39,13 @@ module PinBoard
   )
 where
 
-import Control.Concurrent.MVar
+import Control.Concurrent.MVar (MVar, newMVar, putMVar, takeMVar)
 import Control.Exception (mask_)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Foldable (find)
-import Data.Functor.Compose
+import Data.Functor.Compose (Compose (..))
 import Data.Hashable (Hashable, hash)
-import qualified Data.IntMap as IntMap
+import qualified Data.IntMap as IntMap (alterF, empty, insert, lookup, traverseMaybeWithKey)
 import Data.IntMap.Strict (IntMap)
 import System.Mem.Weak (Weak, deRefWeak, mkWeakPtr)
 import Prelude
@@ -62,7 +62,7 @@ new :: forall a m. MonadIO m => m (PinBoard a)
 new =
   liftIO (PinBoard <$> newMVar IntMap.empty)
 
-pin :: forall a m. (Eq a, Hashable a, MonadIO m) => PinBoard a -> a -> m a
+pin :: forall a m. (Hashable a, MonadIO m) => PinBoard a -> a -> m a
 pin (PinBoard boardVar) x = liftIO do
   mask_ do
     board0 <- takeMVar boardVar
@@ -127,8 +127,7 @@ bucketCompact (Bucket weaks) = do
 -- Like bucketCompact, but doesn't return the alive values.
 bucketCompact_ :: Bucket a -> IO (Maybe (Bucket a))
 bucketCompact_ (Bucket weaks) =
-  -- bucketFromList <$> compactWeaks const weaks
-  bucketFromList <$> mapMaybeM (\w -> (w <$) <$> deRefWeak w) weaks
+  bucketFromList <$> compactWeaks const weaks
 
 -- Look up a value in a bucket per its Eq instance.
 bucketFind :: Eq a => Bucket a -> a -> IO (Maybe a)
@@ -144,7 +143,7 @@ bucketToList :: Bucket a -> IO [a]
 bucketToList (Bucket weaks) =
   mapMaybeM deRefWeak weaks
 
-compactWeaks :: (Weak a -> a -> f b) -> [Weak a] -> IO [f b]
+compactWeaks :: (Weak a -> a -> b) -> [Weak a] -> IO [b]
 compactWeaks f =
   mapMaybeM \w -> fmap (f w) <$> deRefWeak w
 
